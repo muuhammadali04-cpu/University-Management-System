@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useUsersStore } from '../../store/users'
 import UserFormModal from '../../components/modals/UserFormModal.vue'
 
@@ -13,6 +13,10 @@ const filteredUsers = computed(() => usersStore.getUsersByRole(activeTab.value))
 const isModalOpen = ref(false)
 const editingUser = ref(null)
 
+onMounted(() => {
+  usersStore.fetchUsers()
+})
+
 const openAddModal = () => {
   editingUser.value = null
   isModalOpen.value = true
@@ -23,18 +27,26 @@ const openEditModal = (user) => {
   isModalOpen.value = true
 }
 
-const handleSave = (userData) => {
-  if (userData.id) {
-    usersStore.updateUser(userData.id, userData)
-  } else {
-    usersStore.addUser(userData)
+const handleSave = async (userData) => {
+  try {
+    if (userData.id && usersStore.users.some(u => u.id === userData.id)) {
+      await usersStore.updateUser(userData.id, userData)
+    } else {
+      await usersStore.addUser(userData)
+    }
+    isModalOpen.value = false
+  } catch (e) {
+    alert('Could not save user: ' + e.message)
   }
-  isModalOpen.value = false
 }
 
-const handleDelete = (id) => {
+const handleDelete = async (id) => {
   if (confirm('Are you sure you want to delete this user?')) {
-    usersStore.deleteUser(id)
+    try {
+      await usersStore.deleteUser(id)
+    } catch (e) {
+      alert('Could not delete user: ' + e.message)
+    }
   }
 }
 </script>
