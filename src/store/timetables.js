@@ -78,7 +78,7 @@ export const useTimetablesStore = defineStore('timetables', {
         notifStore.addNotification('success', `Timetable request for ${slot.day} at ${slot.period} was approved!`, 'teacher')
         return { success: true }
       }
-      return { success: false, message: 'API Error' }
+      return { success: false, message: res?.error?.message || 'API Error' }
     },
     async rejectSlot(slotId) {
       const slot = this.slots.find(s => s.id === slotId)
@@ -88,6 +88,9 @@ export const useTimetablesStore = defineStore('timetables', {
           slot.status = 'rejected'
           const notifStore = useNotificationStore()
           notifStore.addNotification('warning', `Timetable request for ${slot.day} at ${slot.period} was rejected.`, 'teacher')
+        } else {
+          console.error('Failed to reject slot', res?.error)
+          throw new Error(res?.error?.message || 'Failed to reject slot')
         }
       }
     },

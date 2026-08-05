@@ -15,6 +15,25 @@ const notifications = computed(() => notificationStore.myAlerts)
 const showNotifications = ref(false)
 const notifContainer = ref(null)
 
+let pollInterval = null
+onMounted(() => {
+  notificationStore.fetchNotifications()
+  document.addEventListener('click', handleClickOutside)
+  // Lightweight polling so a notification created in someone else's
+  // session (e.g. a teacher submitting a leave request) shows up here
+  // without requiring a manual page refresh.
+  pollInterval = setInterval(() => notificationStore.fetchNotifications(), 30000)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+  if (pollInterval) clearInterval(pollInterval)
+})
+
+const toggleNotifications = () => {
+  showNotifications.value = !showNotifications.value
+  if (showNotifications.value) notificationStore.fetchNotifications()
+}
+
 const routeTitle = computed(() => {
   const map = {
     'Dashboard': 'Overview Dashboard',
@@ -36,13 +55,6 @@ const handleClickOutside = (event) => {
     showNotifications.value = false
   }
 }
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 
 const handleLogout = () => {
   authStore.logout()
@@ -68,7 +80,7 @@ defineEmits(['toggle-sidebar'])
       
       
       <div class="relative" ref="notifContainer">
-        <button @click="showNotifications = !showNotifications" class="relative p-2.5 text-slate-500 hover:text-accent hover:bg-slate-100 rounded-full transition-all duration-200">
+        <button @click="toggleNotifications" class="relative p-2.5 text-slate-500 hover:text-accent hover:bg-slate-100 rounded-full transition-all duration-200">
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
             <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>

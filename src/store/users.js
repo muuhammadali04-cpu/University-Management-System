@@ -19,17 +19,11 @@ function normalizeUser(u) {
 
 export const useUsersStore = defineStore('users', {
   state: () => ({
-    users: [
-      { id: 'ADM-001', name: 'System Admin', role: 'admin', password: 'password', status: 'Active', joiningDate: '2020-01-15' },
-      { id: 'HOD-CS-01', name: 'Dr. Smith', role: 'hod', password: 'password', department: 'Computer Science', status: 'Active', joiningDate: '2015-08-20' },
-      { id: 'FAC-001', name: 'Prof. Johnson', role: 'teacher', password: 'password', salary: 85000, status: 'Active', joiningDate: '2018-09-01' },
-      { id: 'STD-F23-01', name: 'Jane Doe', role: 'student', password: 'password', feeStatus: 'Paid', balance: 0, status: 'Active', sectionId: 1, batch: 'Fall 2023', joiningDate: '2023-08-15' },
-      { id: 'STD-F23-02', name: 'John Smith', role: 'student', password: 'password', feeStatus: 'Pending', balance: 500, status: 'Active', sectionId: 1, batch: 'Fall 2023', joiningDate: '2023-08-16' },
-      { id: 'STD-S24-01', name: 'Alice Wonderland', role: 'student', password: 'password', feeStatus: 'Paid', balance: 0, status: 'Active', sectionId: 1, batch: 'Spring 2024', joiningDate: '2024-01-10' },
-      { id: 'FIN-001', name: 'Finance Head', role: 'finance', password: 'password', status: 'Active', joiningDate: '2019-03-01' },
-      { id: 'HR-001', name: 'HR Manager', role: 'hr', password: 'password', status: 'Active', joiningDate: '2017-11-20' },
-      { id: 'LIB-001', name: 'Chief Librarian', role: 'librarian', password: 'password', status: 'Active', joiningDate: '2021-05-15' }
-    ],
+    // Previously pre-loaded with hardcoded demo accounts. Now starts
+    // empty and is always populated from Supabase via fetchUsers() -
+    // login calls this before matching credentials, and every page that
+    // needs the user list calls it on mount.
+    users: [],
     isLoading: false,
     error: null
   }),

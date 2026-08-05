@@ -42,10 +42,7 @@ export const useAuthStore = defineStore('auth', {
     },
     async logout() {
       this.isLoading = true
-      
-      
-      await ApiClient.post('auth/logout')
-      
+
       this.user = null
       this.isAuthenticated = false
       this.isLoading = false

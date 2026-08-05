@@ -17,7 +17,7 @@ export const useLeavesStore = defineStore('leaves', {
           const record = {
             id: leave.id,
             requesterId: leave.user_id,
-            type: leave.type,
+            type: 'full-day',
             date: leave.start_date,
             status: leave.status,
             reason: leave.reason
@@ -26,6 +26,7 @@ export const useLeavesStore = defineStore('leaves', {
             const parsed = JSON.parse(leave.reason)
             if (parsed.isJson) {
               record.reason = parsed.reason
+              record.type = parsed.type || 'full-day'
               record.targetTeacherId = parsed.targetTeacherId
               record.period = parsed.period
               record.requesterRole = parsed.requesterRole
@@ -45,12 +46,15 @@ export const useLeavesStore = defineStore('leaves', {
         // role is NOT NULL on hr_leaves - this was previously missing and
         // silently broke every single leave request insert.
         role: payload.requesterRole || requester?.role || 'unknown',
-        type: payload.type || 'full-day',
+        // hr_leaves has NO 'type' column at all - it must be embedded in
+        // the JSON-encoded reason (like targetTeacherId/period below),
+        // not sent as a top-level field, or the insert is rejected.
         start_date: payload.date,
         end_date: payload.date,
         reason: JSON.stringify({
           isJson: true,
           reason: payload.reason,
+          type: payload.type || 'full-day',
           targetTeacherId: payload.targetTeacherId,
           period: payload.period,
           requesterRole: payload.requesterRole
