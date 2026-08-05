@@ -19,18 +19,21 @@ const activeTab = ref('my-leaves')
 const myLeaves = computed(() => leavesStore.records.filter(l => l.requesterId === teacherId.value))
 const leaveForm = ref({ date: '', reason: '' })
 
-const submitLeave = () => {
+const submitLeave = async () => {
   if (!leaveForm.value.date || !leaveForm.value.reason) return
-  
-  leavesStore.requestLeave({
-    requesterId: teacherId.value,
-    requesterRole: 'teacher',
-    type: 'full-day',
-    date: leaveForm.value.date,
-    reason: leaveForm.value.reason
-  })
-  
-  leaveForm.value = { date: '', reason: '' }
+
+  try {
+    await leavesStore.requestLeave({
+      requesterId: teacherId.value,
+      requesterRole: 'teacher',
+      type: 'full-day',
+      date: leaveForm.value.date,
+      reason: leaveForm.value.reason
+    })
+    leaveForm.value = { date: '', reason: '' }
+  } catch (e) {
+    alert('Could not submit leave request: ' + e.message)
+  }
 }
 
 

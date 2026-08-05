@@ -2,7 +2,7 @@
 import { useFinanceStore } from '../../store/finance'
 import { useUsersStore } from '../../store/users'
 import { useInfrastructureStore } from '../../store/infrastructure'
-import { computed, ref, nextTick } from 'vue'
+import { computed, ref, nextTick, onMounted } from 'vue'
 
 const financeStore = useFinanceStore()
 const usersStore = useUsersStore()

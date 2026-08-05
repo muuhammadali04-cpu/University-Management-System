@@ -62,9 +62,13 @@ const openSlotModal = (day, period) => {
   showModal.value = true
 }
 
-const submitRequest = () => {
+const submitRequest = async () => {
   if (selectedAppt.value) {
-    ttStore.requestSlot(selectedAppt.value, selectedDay.value, selectedPeriod.value)
+    try {
+      await ttStore.requestSlot(selectedAppt.value, selectedDay.value, selectedPeriod.value)
+    } catch (e) {
+      alert('Could not request slot: ' + e.message)
+    }
   }
   showModal.value = false
 }

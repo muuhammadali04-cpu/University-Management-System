@@ -62,17 +62,21 @@ const selectClass = (cls) => {
 const showToast = ref(false)
 const toastMessage = ref('')
 
-const saveGrades = () => {
-  Object.keys(gradeForm.value).forEach(studentId => {
-    const grades = gradeForm.value[studentId]
-    grades.midterm = Math.min(30, Math.max(0, Number(grades.midterm) || 0))
-    grades.final = Math.min(50, Math.max(0, Number(grades.final) || 0))
-    grades.assignments = Math.min(20, Math.max(0, Number(grades.assignments) || 0))
-    gradesStore.saveGrade(studentId, selectedClass.value.subject_id, teacherId.value, grades)
-  })
-  toastMessage.value = 'Grades updated successfully!'
-  showToast.value = true
-  setTimeout(() => { showToast.value = false }, 3000)
+const saveGrades = async () => {
+  try {
+    for (const studentId of Object.keys(gradeForm.value)) {
+      const grades = gradeForm.value[studentId]
+      grades.midterm = Math.min(30, Math.max(0, Number(grades.midterm) || 0))
+      grades.final = Math.min(50, Math.max(0, Number(grades.final) || 0))
+      grades.assignments = Math.min(20, Math.max(0, Number(grades.assignments) || 0))
+      await gradesStore.saveGrade(studentId, selectedClass.value.subject_id, teacherId.value, grades)
+    }
+    toastMessage.value = 'Grades updated successfully!'
+    showToast.value = true
+    setTimeout(() => { showToast.value = false }, 3000)
+  } catch (e) {
+    alert('Could not save grades: ' + e.message)
+  }
 }
 </script>
 

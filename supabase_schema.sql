@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS infrastructure_rooms (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    capacity INTEGER NOT NULL
+    capacity INTEGER NOT NULL,
+    type TEXT
 );
 
 CREATE TABLE IF NOT EXISTS infrastructure_sections (
@@ -64,6 +65,9 @@ CREATE TABLE IF NOT EXISTS library_requests (
     user_name TEXT NOT NULL,
     type TEXT NOT NULL,
     book_id TEXT REFERENCES library_inventory(id),
+    title TEXT,
+    author TEXT,
+    reason TEXT,
     status TEXT DEFAULT 'Pending'
 );
 
@@ -100,6 +104,7 @@ CREATE TABLE IF NOT EXISTS academic_grades (
     id SERIAL PRIMARY KEY,
     student_id TEXT REFERENCES users(id),
     subject_id INTEGER REFERENCES infrastructure_subjects(id),
+    teacher_id TEXT REFERENCES users(id),
     midterm NUMERIC,
     final NUMERIC,
     assignments NUMERIC
@@ -116,6 +121,7 @@ CREATE TABLE IF NOT EXISTS academic_attendance (
 CREATE TABLE IF NOT EXISTS timetables (
     id SERIAL PRIMARY KEY,
     teacher_id TEXT REFERENCES users(id),
+    appointment_id INTEGER,
     day TEXT NOT NULL,
     time_slot TEXT NOT NULL,
     status TEXT DEFAULT 'Active'
@@ -140,6 +146,15 @@ CREATE TABLE IF NOT EXISTS hr_leaves (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     status TEXT DEFAULT 'Pending'
+);
+
+CREATE TABLE IF NOT EXISTS hr_fines (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT REFERENCES users(id),
+    amount NUMERIC NOT NULL,
+    reason TEXT NOT NULL,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    status TEXT DEFAULT 'Unpaid'
 );
 
 CREATE TABLE IF NOT EXISTS notices (
@@ -178,6 +193,7 @@ ALTER TABLE academic_attendance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE timetables ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hr_leaves ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hr_fines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
@@ -199,5 +215,6 @@ CREATE POLICY "Allow public access for attendance" ON academic_attendance FOR AL
 CREATE POLICY "Allow public access for timetables" ON timetables FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public access for appointments" ON appointments FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public access for hr_leaves" ON hr_leaves FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public access for hr_fines" ON hr_fines FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public access for notices" ON notices FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public access for notifications" ON notifications FOR ALL USING (true) WITH CHECK (true);

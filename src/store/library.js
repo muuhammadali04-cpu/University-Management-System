@@ -2,6 +2,28 @@ import { defineStore } from 'pinia'
 import { ApiClient } from '../services/apiClient'
 import { useNotificationStore } from './notifications'
 
+function normalizeRequest(r) {
+  if (!r) return r
+  return {
+    ...r,
+    userId: r.user_id ?? r.userId,
+    bookId: r.book_id ?? r.bookId,
+    user_id: r.user_id ?? r.userId,
+    book_id: r.book_id ?? r.bookId
+  }
+}
+
+function normalizeIssued(ib) {
+  if (!ib) return ib
+  return {
+    ...ib,
+    userId: ib.user_id ?? ib.userId,
+    bookId: ib.book_id ?? ib.bookId,
+    user_id: ib.user_id ?? ib.userId,
+    book_id: ib.book_id ?? ib.bookId
+  }
+}
+
 export const useLibraryStore = defineStore('library', {
   state: () => ({
     inventory: [],
@@ -15,7 +37,10 @@ export const useLibraryStore = defineStore('library', {
     getPendingBorrowRequests: (state) => state.requests.filter(r => r.type === 'borrow' && r.status === 'pending'),
     getPendingNewBookRequests: (state) => state.requests.filter(r => r.type === 'new_book' && r.status === 'pending'),
     getUserIssuedBooks: (state) => (userId) => {
-      const issued = state.issuedBooks.filter(ib => (ib.userId === userId || ib.user_id === userId) && ib.status === 'issued')
+      // library_issued has no status column - a row existing IS the
+      // "currently issued" state (returnBook deletes the row). Filtering
+      // on a non-existent status field previously hid every issued book.
+      const issued = state.issuedBooks.filter(ib => ib.userId === userId || ib.user_id === userId)
       return issued.map(ib => {
         const book = state.inventory.find(b => b.id === ib.bookId || b.id === ib.book_id)
         return { ...ib, book }
@@ -32,23 +57,46 @@ export const useLibraryStore = defineStore('library', {
       const reqs = await ApiClient.get('library_requests')
       const issued = await ApiClient.get('library_issued')
       
-      if (books) this.inventory = books
-      if (reqs) this.requests = reqs
-      if (issued) this.issuedBooks = issued
+      if (books) {
+        this.inventory = books.map(b => ({
+          ...b,
+          totalCopies: b.totalcopies ?? b.totalCopies,
+          availableCopies: b.availablecopies ?? b.availableCopies
+        }))
+      }
+      if (reqs) this.requests = reqs.map(normalizeRequest)
+      if (issued) this.issuedBooks = issued.map(normalizeIssued)
       this.isLoading = false
     },
     async addBook(bookData) {
+      // library_inventory.id is a TEXT PRIMARY KEY with no default - it
+      // must be supplied by the client. It was never being generated
+      // before, which made every "Add Book" fail.
+      const id = bookData.id || 'BOOK-' + Date.now().toString(36).toUpperCase()
+
+      // The schema declares `totalCopies`/`availableCopies` unquoted, so
+      // Postgres folds them to lowercase: totalcopies / availablecopies.
+      // Sending total_copies/available_copies (snake_case) doesn't match
+      // any real column and was silently breaking every insert.
       const dbPayload = {
+        id,
         title: bookData.title,
         author: bookData.author,
         isbn: bookData.isbn || '',
         category: bookData.category || '',
-        total_copies: bookData.totalCopies,
-        available_copies: bookData.totalCopies
+        totalcopies: bookData.totalCopies,
+        availablecopies: bookData.totalCopies
       }
       const res = await ApiClient.post('library_inventory', dbPayload)
       if (res && res.success) {
-        this.inventory.push({ ...res.data, totalCopies: res.data.total_copies, availableCopies: res.data.available_copies })
+        this.inventory.push({
+          ...res.data,
+          totalCopies: res.data.totalcopies,
+          availableCopies: res.data.availablecopies
+        })
+      } else {
+        console.error('Failed to add book', res?.error)
+        throw new Error(res?.error?.message || 'Failed to add book')
       }
     },
     async updateBook(id, updatedData) {
@@ -57,8 +105,8 @@ export const useLibraryStore = defineStore('library', {
       if (updatedData.author !== undefined) dbPayload.author = updatedData.author
       if (updatedData.category !== undefined) dbPayload.category = updatedData.category
       if (updatedData.isbn !== undefined) dbPayload.isbn = updatedData.isbn
-      if (updatedData.totalCopies !== undefined) dbPayload.total_copies = updatedData.totalCopies
-      if (updatedData.availableCopies !== undefined) dbPayload.available_copies = updatedData.availableCopies
+      if (updatedData.totalCopies !== undefined) dbPayload.totalcopies = updatedData.totalCopies
+      if (updatedData.availableCopies !== undefined) dbPayload.availablecopies = updatedData.availableCopies
 
       const res = await ApiClient.put('library_inventory', id, dbPayload)
       if (res && res.success) {
@@ -66,6 +114,9 @@ export const useLibraryStore = defineStore('library', {
         if (index !== -1) {
           this.inventory[index] = { ...this.inventory[index], ...updatedData }
         }
+      } else {
+        console.error('Failed to update book', res?.error)
+        throw new Error(res?.error?.message || 'Failed to update book')
       }
     },
     async deleteBook(id) {
@@ -84,10 +135,13 @@ export const useLibraryStore = defineStore('library', {
       }
       const res = await ApiClient.post('library_requests', newReq)
       if (res && res.success) {
-        this.requests.push(res.data || newReq)
+        this.requests.push(normalizeRequest(res.data) || normalizeRequest(newReq))
         const book = this.inventory.find(b => b.id === bookId)
         const notifications = useNotificationStore()
         notifications.addNotification('Alert', `${userName} has requested to borrow "${book?.title}".`, 'librarian')
+      } else {
+        console.error('Failed to request book', res?.error)
+        throw new Error(res?.error?.message || 'Failed to request book')
       }
     },
     async requestNewBook(userId, userName, title, author, reason) {
@@ -102,9 +156,12 @@ export const useLibraryStore = defineStore('library', {
       }
       const res = await ApiClient.post('library_requests', newReq)
       if (res && res.success) {
-        this.requests.push(res.data || newReq)
+        this.requests.push(normalizeRequest(res.data) || normalizeRequest(newReq))
         const notifications = useNotificationStore()
         notifications.addNotification('System', `${userName} has suggested a new book: "${title}".`, 'librarian')
+      } else {
+        console.error('Failed to submit new book request', res?.error)
+        throw new Error(res?.error?.message || 'Failed to submit new book request')
       }
     },
     async approveRequest(requestId) {
@@ -117,7 +174,7 @@ export const useLibraryStore = defineStore('library', {
         const book = this.inventory.find(b => b.id === req.bookId || b.id === req.book_id)
         const available = book.availableCopies !== undefined ? book.availableCopies : book.available_copies
         if (book && available > 0) {
-          const updatedBook = { available_copies: available - 1 }
+          const updatedBook = { availablecopies: available - 1 }
           await ApiClient.put('library_inventory', book.id, updatedBook)
           if (book.availableCopies !== undefined) {
             book.availableCopies--
@@ -187,7 +244,7 @@ export const useLibraryStore = defineStore('library', {
         const book = this.inventory.find(b => b.id === issueRecord.book_id || b.id === issueRecord.bookId)
         if (book) {
           const available = book.availableCopies !== undefined ? book.availableCopies : book.available_copies
-          const updatedBook = { available_copies: available + 1 }
+          const updatedBook = { availablecopies: available + 1 }
           await ApiClient.put('library_inventory', book.id, updatedBook)
           if (book.availableCopies !== undefined) {
             book.availableCopies++

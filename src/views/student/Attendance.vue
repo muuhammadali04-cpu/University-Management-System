@@ -17,10 +17,9 @@ const attendanceHistory = computed(() => {
   
   const records = attendanceStore.getAttendanceForStudent(studentId.value)
   return records.map(r => {
-    const appt = appointmentsStore.appointments.find(a => a.id === r.appointmentId)
     return {
       ...r,
-      subject: infraStore.subjects.find(s => s.id === appt?.subjectId)?.name || 'Unknown'
+      subject: infraStore.subjects.find(s => s.id === r.subject_id)?.name || 'Unknown'
     }
   }).sort((a, b) => new Date(b.date) - new Date(a.date))
 })

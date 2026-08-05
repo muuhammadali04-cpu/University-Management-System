@@ -22,16 +22,21 @@ const notices = computed(() => noticesStore.notices)
 const isModalOpen = ref(false)
 const newNotice = ref({ title: '', content: '' })
 
-const submitNotice = () => {
+const submitNotice = async () => {
   if (newNotice.value.title && newNotice.value.content) {
-    noticesStore.addNotice({
-      title: newNotice.value.title,
-      author: authStore.user?.name || 'Faculty',
-      authorId: authStore.user?.id,
-      content: newNotice.value.content
-    })
-    isModalOpen.value = false
-    newNotice.value = { title: '', content: '' }
+    try {
+      await noticesStore.addNotice({
+        title: newNotice.value.title,
+        author: authStore.user?.name || 'Faculty',
+        authorId: authStore.user?.id,
+        role: authStore.user?.role,
+        content: newNotice.value.content
+      })
+      isModalOpen.value = false
+      newNotice.value = { title: '', content: '' }
+    } catch (e) {
+      alert('Could not post notice: ' + e.message)
+    }
   }
 }
 </script>

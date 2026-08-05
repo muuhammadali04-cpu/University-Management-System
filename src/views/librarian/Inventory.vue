@@ -33,10 +33,14 @@ const openAddModal = () => {
   showAddModal.value = true
 }
 
-const handleAddBook = () => {
+const handleAddBook = async () => {
   if (newBook.value.title && newBook.value.author) {
-    libraryStore.addBook({ ...newBook.value })
-    showAddModal.value = false
+    try {
+      await libraryStore.addBook({ ...newBook.value })
+      showAddModal.value = false
+    } catch (e) {
+      alert('Could not add book: ' + e.message)
+    }
   }
 }
 
@@ -45,10 +49,14 @@ const openEditModal = (book) => {
   showEditModal.value = true
 }
 
-const handleUpdateBook = () => {
+const handleUpdateBook = async () => {
   if (editingBook.value.title && editingBook.value.author) {
-    libraryStore.updateBook(editingBook.value.id, { ...editingBook.value })
-    showEditModal.value = false
+    try {
+      await libraryStore.updateBook(editingBook.value.id, { ...editingBook.value })
+      showEditModal.value = false
+    } catch (e) {
+      alert('Could not update book: ' + e.message)
+    }
   }
 }
 

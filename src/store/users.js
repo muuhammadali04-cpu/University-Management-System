@@ -1,6 +1,22 @@
 import { defineStore } from 'pinia'
 import { ApiClient } from '../services/apiClient'
 
+// Supabase returns snake_case (section_id, fee_status, joining_date) but
+// several views read camelCase (sectionId, feeStatus, joiningDate).
+// Normalizing here keeps both conventions working everywhere.
+function normalizeUser(u) {
+  if (!u) return u
+  return {
+    ...u,
+    sectionId: u.section_id ?? u.sectionId,
+    section_id: u.section_id ?? u.sectionId,
+    feeStatus: u.fee_status ?? u.feeStatus,
+    fee_status: u.fee_status ?? u.feeStatus,
+    joiningDate: u.joining_date ?? u.joiningDate,
+    joining_date: u.joining_date ?? u.joiningDate
+  }
+}
+
 export const useUsersStore = defineStore('users', {
   state: () => ({
     users: [
@@ -25,7 +41,7 @@ export const useUsersStore = defineStore('users', {
       this.isLoading = true
       this.error = null
       const data = await ApiClient.get('users')
-      if (data) this.users = data
+      if (data) this.users = data.map(normalizeUser)
       this.isLoading = false
     },
     // Builds a payload that only contains columns that actually exist on the
@@ -68,7 +84,7 @@ export const useUsersStore = defineStore('users', {
       const res = await ApiClient.post('users', dbPayload)
       if (res && res.success) {
         // Use what the DB actually stored so the table reflects reality
-        this.users.push(res.data || { ...userData, status: 'Active' })
+        this.users.push(normalizeUser(res.data) || { ...userData, status: 'Active' })
       } else {
         console.error("Failed to add user to Supabase", res?.error)
         this.error = res?.error?.message || 'Failed to add user'
@@ -94,7 +110,7 @@ export const useUsersStore = defineStore('users', {
       if (res && res.success) {
         const index = this.users.findIndex(u => u.id === id)
         if (index !== -1) {
-          this.users[index] = { ...this.users[index], ...(res.data || updatedData) }
+          this.users[index] = normalizeUser({ ...this.users[index], ...(res.data || updatedData) })
         }
       } else {
         console.error("Failed to update user in Supabase", res?.error)

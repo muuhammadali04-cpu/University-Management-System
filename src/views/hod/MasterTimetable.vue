@@ -63,35 +63,40 @@ const openCreateModal = (day, period) => {
   showModal.value = true
 }
 
-const handleCreateSlot = () => {
+const handleCreateSlot = async () => {
   if (!newSlot.value.teacherId || !newSlot.value.subjectId || !newSlot.value.roomId || !newSlot.value.sectionId || !newSlot.value.day || !newSlot.value.period) {
     alert("Please fill all fields to create a slot.")
     return
   }
-  
-  let appt = apptStore.appointments.find(a => 
+
+  let appt = apptStore.appointments.find(a =>
     a.teacher_id === newSlot.value.teacherId &&
     a.subject_id === newSlot.value.subjectId &&
     a.room_id === newSlot.value.roomId &&
     a.section_id === newSlot.value.sectionId
   )
-  
-  if (!appt) {
-    appt = {
-      id: Date.now(),
-      teacher_id: newSlot.value.teacherId,
-      subject_id: newSlot.value.subjectId,
-      room_id: newSlot.value.roomId,
-      section_id: newSlot.value.sectionId
+
+  try {
+    if (!appt) {
+      // Must be awaited so we get back the real DB-generated id - using a
+      // fake client-side id here previously meant the created timetable
+      // slot pointed at an appointment that didn't actually exist.
+      appt = await apptStore.addAppointment({
+        teacherId: newSlot.value.teacherId,
+        subjectId: newSlot.value.subjectId,
+        roomId: newSlot.value.roomId,
+        sectionId: newSlot.value.sectionId
+      })
     }
-    apptStore.addAppointment(appt)
-  }
-  
-  const result = ttStore.createApprovedSlot(appt.id, newSlot.value.day, newSlot.value.period)
-  if (!result.success) {
-    alert("Conflict Prevented:\n\n" + result.message)
-  } else {
-    showModal.value = false
+
+    const result = await ttStore.createApprovedSlot(appt.id, newSlot.value.day, newSlot.value.period)
+    if (!result.success) {
+      alert("Conflict Prevented:\n\n" + result.message)
+    } else {
+      showModal.value = false
+    }
+  } catch (e) {
+    alert('Could not create slot: ' + e.message)
   }
 }
 </script>

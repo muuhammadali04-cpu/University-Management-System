@@ -34,8 +34,8 @@ const displayToast = (msg, type = 'success') => {
   setTimeout(() => showToast.value = false, 3000)
 }
 
-const handleApprove = (slotId) => {
-  const result = ttStore.approveSlot(slotId)
+const handleApprove = async (slotId) => {
+  const result = await ttStore.approveSlot(slotId)
   if (!result.success) {
     displayToast("Conflict Prevented: " + result.message, 'error')
   } else {
@@ -43,9 +43,9 @@ const handleApprove = (slotId) => {
   }
 }
 
-const handleReject = (slotId) => {
+const handleReject = async (slotId) => {
   if (confirm("Reject this slot request?")) {
-    ttStore.rejectSlot(slotId)
+    await ttStore.rejectSlot(slotId)
     displayToast("Timetable request rejected.")
   }
 }

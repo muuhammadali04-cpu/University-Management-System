@@ -41,20 +41,22 @@ INSERT INTO infrastructure_subjects (id, code, name, credits) VALUES
   (5, 'PHY101', 'Applied Physics', 3);
 
 -- 3. Insert Library Inventory Data
-INSERT INTO library_inventory (id, title, author, copies) VALUES 
-  ('BOK-001', 'Introduction to Algorithms', 'Thomas H. Cormen', 15),
-  ('BOK-002', 'Clean Code', 'Robert C. Martin', 8),
-  ('BOK-003', 'Design Patterns', 'Erich Gamma', 5),
-  ('BOK-004', 'The Pragmatic Programmer', 'Andrew Hunt', 10),
-  ('BOK-005', 'Calculus: Early Transcendentals', 'James Stewart', 20),
-  ('BOK-006', 'University Physics', 'Hugh D. Young', 12);
+INSERT INTO library_inventory (id, title, author, totalcopies, availablecopies) VALUES 
+  ('BOK-001', 'Introduction to Algorithms', 'Thomas H. Cormen', 15, 14),
+  ('BOK-002', 'Clean Code', 'Robert C. Martin', 8, 7),
+  ('BOK-003', 'Design Patterns', 'Erich Gamma', 5, 4),
+  ('BOK-004', 'The Pragmatic Programmer', 'Andrew Hunt', 10, 10),
+  ('BOK-005', 'Calculus: Early Transcendentals', 'James Stewart', 20, 20),
+  ('BOK-006', 'University Physics', 'Hugh D. Young', 12, 12);
 
 -- 4. Insert Library Requests Data
+-- type must be 'borrow' or 'new_book', status must be 'pending'/'approved'/'rejected'
+-- (lowercase) to match what the app's filters look for.
 INSERT INTO library_requests (user_id, user_name, type, book_id, status) VALUES 
-  ('STD-F23-01', 'Jane Doe', 'Issue', 'BOK-001', 'Pending'),
-  ('STD-F23-02', 'John Smith', 'Issue', 'BOK-002', 'Approved'),
-  ('STD-S24-01', 'Alice Wonderland', 'Issue', 'BOK-004', 'Pending'),
-  ('FAC-001', 'Prof. Ada Lovelace', 'Issue', 'BOK-003', 'Approved');
+  ('STD-F23-01', 'Jane Doe', 'borrow', 'BOK-001', 'pending'),
+  ('STD-F23-02', 'John Smith', 'borrow', 'BOK-002', 'approved'),
+  ('STD-S24-01', 'Alice Wonderland', 'borrow', 'BOK-004', 'pending'),
+  ('FAC-001', 'Prof. Ada Lovelace', 'borrow', 'BOK-003', 'approved');
 
 -- 5. Insert Finance Vouchers Data
 INSERT INTO finance_vouchers (id, student_id, type, amount, status, due_date) VALUES 

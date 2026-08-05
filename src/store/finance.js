@@ -29,6 +29,7 @@ export const useFinanceStore = defineStore('finance', {
       if (voucher) {
         const res = await ApiClient.put('finance_vouchers', voucherId, { status: 'Paid' })
         if (res && res.success) voucher.status = 'Paid'
+        else { console.error('Failed to mark voucher paid', res?.error); throw new Error(res?.error?.message || 'Failed to mark voucher paid') }
       }
     },
     async markUnpaid(voucherId) {
@@ -36,6 +37,7 @@ export const useFinanceStore = defineStore('finance', {
       if (voucher) {
         const res = await ApiClient.put('finance_vouchers', voucherId, { status: 'Unpaid' })
         if (res && res.success) voucher.status = 'Unpaid'
+        else { console.error('Failed to mark voucher unpaid', res?.error); throw new Error(res?.error?.message || 'Failed to mark voucher unpaid') }
       }
     },
     async generateVouchersForSection(sectionId, type, amount, dueDate) {
@@ -54,6 +56,9 @@ export const useFinanceStore = defineStore('finance', {
         const res = await ApiClient.post('finance_vouchers', newVoucher)
         if (res && res.success) {
           this.vouchers.push(res.data || newVoucher)
+        } else {
+          console.error('Failed to generate voucher', res?.error)
+          throw new Error(res?.error?.message || 'Failed to generate vouchers')
         }
       }
     },
@@ -66,6 +71,9 @@ export const useFinanceStore = defineStore('finance', {
       const res = await ApiClient.post('finance_payrolls', newPayroll)
       if (res && res.success) {
         this.payrolls.push(res.data || newPayroll)
+      } else {
+        console.error('Failed to process payroll', res?.error)
+        throw new Error(res?.error?.message || 'Failed to process payroll')
       }
     }
   }

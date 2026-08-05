@@ -42,6 +42,9 @@ export const useLeavesStore = defineStore('leaves', {
       
       const dbPayload = {
         user_id: payload.requesterId,
+        // role is NOT NULL on hr_leaves - this was previously missing and
+        // silently broke every single leave request insert.
+        role: payload.requesterRole || requester?.role || 'unknown',
         type: payload.type || 'full-day',
         start_date: payload.date,
         end_date: payload.date,
@@ -68,6 +71,9 @@ export const useLeavesStore = defineStore('leaves', {
         } else if (payload.type === 'class' && payload.targetTeacherId) {
           notifStore.addNotification('info', `New class leave request from ${requester?.name || 'Student'}`, 'teacher')
         }
+      } else {
+        console.error('Failed to submit leave request', res?.error)
+        throw new Error(res?.error?.message || 'Failed to submit leave request')
       }
     },
     async updateLeaveStatus(id, newStatus) {
@@ -82,6 +88,9 @@ export const useLeavesStore = defineStore('leaves', {
             `Your leave request for ${leave.date} was ${newStatus}`, 
             leave.requesterRole
           )
+        } else {
+          console.error('Failed to update leave status', res?.error)
+          throw new Error(res?.error?.message || 'Failed to update leave status')
         }
       }
     }

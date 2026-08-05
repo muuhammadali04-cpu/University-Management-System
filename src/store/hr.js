@@ -28,6 +28,9 @@ export const useHrStore = defineStore('hr', {
       const res = await ApiClient.post('hr_fines', payload)
       if (res && res.success) {
         this.fines.unshift(res.data)
+      } else {
+        console.error('Failed to issue fine', res?.error)
+        throw new Error(res?.error?.message || 'Failed to issue fine')
       }
     },
     async modifyFine(fineId, amount, reason) {
@@ -37,6 +40,9 @@ export const useHrStore = defineStore('hr', {
         if (res && res.success) {
           fine.amount = amount
           fine.reason = reason
+        } else {
+          console.error('Failed to modify fine', res?.error)
+          throw new Error(res?.error?.message || 'Failed to modify fine')
         }
       }
     },
@@ -46,6 +52,9 @@ export const useHrStore = defineStore('hr', {
         const res = await ApiClient.put('hr_fines', fineId, { status: 'Paid' })
         if (res && res.success) {
           fine.status = 'Paid'
+        } else {
+          console.error('Failed to mark fine paid', res?.error)
+          throw new Error(res?.error?.message || 'Failed to mark fine paid')
         }
       }
     }

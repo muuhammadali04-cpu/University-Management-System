@@ -26,24 +26,32 @@ const openModal = (type, item = null) => {
   isModalOpen.value = true
 }
 
-const handleSave = (data) => {
-  if (data.id) {
-    if (modalType.value === 'room') infraStore.updateRoom(data.id, data)
-    else if (modalType.value === 'section') infraStore.updateSection(data.id, data)
-    else infraStore.updateSubject(data.id, data)
-  } else {
-    if (modalType.value === 'room') infraStore.addRoom(data)
-    else if (modalType.value === 'section') infraStore.addSection(data)
-    else infraStore.addSubject(data)
+const handleSave = async (data) => {
+  try {
+    if (data.id) {
+      if (modalType.value === 'room') await infraStore.updateRoom(data.id, data)
+      else if (modalType.value === 'section') await infraStore.updateSection(data.id, data)
+      else await infraStore.updateSubject(data.id, data)
+    } else {
+      if (modalType.value === 'room') await infraStore.addRoom(data)
+      else if (modalType.value === 'section') await infraStore.addSection(data)
+      else await infraStore.addSubject(data)
+    }
+    isModalOpen.value = false
+  } catch (e) {
+    alert('Could not save: ' + e.message)
   }
-  isModalOpen.value = false
 }
 
-const handleDelete = (type, id) => {
+const handleDelete = async (type, id) => {
   if (confirm(`Are you sure you want to delete this ${type}?`)) {
-    if (type === 'room') infraStore.deleteRoom(id)
-    else if (type === 'section') infraStore.deleteSection(id)
-    else infraStore.deleteSubject(id)
+    try {
+      if (type === 'room') await infraStore.deleteRoom(id)
+      else if (type === 'section') await infraStore.deleteSection(id)
+      else await infraStore.deleteSubject(id)
+    } catch (e) {
+      alert('Could not delete: ' + e.message)
+    }
   }
 }
 </script>

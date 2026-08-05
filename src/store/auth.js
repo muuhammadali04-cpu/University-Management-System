@@ -12,13 +12,14 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(username, password) {
       this.isLoading = true
-      
-      
-      await ApiClient.get('auth')
-      
+
       const usersStore = useUsersStore()
-      
-      
+      // Always pull the latest users from Supabase before checking
+      // credentials - otherwise only the hardcoded seed accounts (loaded
+      // in memory before any fetch) could ever log in, and any user
+      // created from the admin panel would be rejected.
+      await usersStore.fetchUsers()
+
       const matchedUser = usersStore.users.find(
         u => u.id === username && u.password === password
       )

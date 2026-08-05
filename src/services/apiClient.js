@@ -16,7 +16,12 @@ export const ApiClient = {
       console.error('Supabase POST Error:', error)
       return { success: false, error }
     }
-    return { success: true, data: data[0] || payload }
+    if (!data || data.length === 0) {
+      const notFoundError = { message: `Insert into "${resource}" returned no row.` }
+      console.error('Supabase POST Error:', notFoundError.message)
+      return { success: false, error: notFoundError }
+    }
+    return { success: true, data: data[0] }
   },
 
   async put(resource, id, payload) {
@@ -25,7 +30,16 @@ export const ApiClient = {
       console.error('Supabase PUT Error:', error)
       return { success: false, error }
     }
-    return { success: true, data: data[0] || payload }
+    // Supabase does NOT return an error when an update matches zero rows -
+    // it just returns an empty array. Without this check, every update
+    // (approve/reject/edit buttons across the whole app) reported success
+    // even when nothing was actually changed in the database.
+    if (!data || data.length === 0) {
+      const notFoundError = { message: `No matching row found in "${resource}" for id "${id}" - nothing was updated.` }
+      console.error('Supabase PUT Error:', notFoundError.message)
+      return { success: false, error: notFoundError }
+    }
+    return { success: true, data: data[0] }
   },
 
   async delete(resource, id) {

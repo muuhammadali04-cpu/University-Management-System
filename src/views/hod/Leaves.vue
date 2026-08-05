@@ -30,9 +30,13 @@ const displayToast = (msg, type = 'success') => {
   setTimeout(() => showToast.value = false, 3000)
 }
 
-const handleRequest = (id, status) => {
-  leavesStore.updateLeaveStatus(id, status)
-  displayToast(`Leave request ${status}.`, status === 'approved' ? 'success' : 'error')
+const handleRequest = async (id, status) => {
+  try {
+    await leavesStore.updateLeaveStatus(id, status)
+    displayToast(`Leave request ${status}.`, status === 'approved' ? 'success' : 'error')
+  } catch (e) {
+    displayToast('Could not update request: ' + e.message, 'error')
+  }
 }
 </script>
 

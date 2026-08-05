@@ -10,7 +10,7 @@ const hrStore = useHrStore()
 const studentId = computed(() => authStore.user?.id)
 
 onMounted(() => {
-  financeStore.fetchFinance()
+  financeStore.fetchFinanceData()
   hrStore.fetchFines()
 })
 

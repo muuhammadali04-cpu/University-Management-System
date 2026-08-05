@@ -31,12 +31,16 @@ const openBorrowModal = (book) => {
   showBorrowModal.value = true
 }
 
-const handleBorrowRequest = () => {
+const handleBorrowRequest = async () => {
   if (selectedBook.value) {
-    libraryStore.requestBorrow(authStore.user.id, authStore.user.name, selectedBook.value.id)
-    showBorrowModal.value = false
-    selectedBook.value = null
-    activeTab.value = 'my_books' 
+    try {
+      await libraryStore.requestBorrow(authStore.user.id, authStore.user.name, selectedBook.value.id)
+      showBorrowModal.value = false
+      selectedBook.value = null
+      activeTab.value = 'my_books' 
+    } catch (e) {
+      alert('Could not submit request: ' + e.message)
+    }
   }
 }
 
@@ -46,17 +50,21 @@ const newBookRequest = ref({
   reason: ''
 })
 
-const handleNewBookRequest = () => {
+const handleNewBookRequest = async () => {
   if (newBookRequest.value.title && newBookRequest.value.author && newBookRequest.value.reason) {
-    libraryStore.requestNewBook(
-      authStore.user.id, 
-      authStore.user.name, 
-      newBookRequest.value.title, 
-      newBookRequest.value.author, 
-      newBookRequest.value.reason
-    )
-    newBookRequest.value = { title: '', author: '', reason: '' }
-    showSuggestModal.value = false
+    try {
+      await libraryStore.requestNewBook(
+        authStore.user.id, 
+        authStore.user.name, 
+        newBookRequest.value.title, 
+        newBookRequest.value.author, 
+        newBookRequest.value.reason
+      )
+      newBookRequest.value = { title: '', author: '', reason: '' }
+      showSuggestModal.value = false
+    } catch (e) {
+      alert('Could not submit request: ' + e.message)
+    }
   }
 }
 
